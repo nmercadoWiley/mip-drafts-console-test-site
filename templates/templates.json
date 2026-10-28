@@ -1,0 +1,120 @@
+{
+  "schema": 1,
+  "version": "1.0.0",
+  "updated": "2026-10-01",
+  "approvedBy": "",
+  "changeNote": "Initial version: wording moved out of the code unchanged from v2.1.",
+  "history": [],
+  "templates": {
+    "editorSummary": {
+      "name": "Handling Editor action summary",
+      "audience": "External Handling Editors",
+      "tab": "Editor, Triage & EA Drafts · Step 06",
+      "fields": {
+        "subject": "{{journal_prefix}}Action summary for your manuscripts",
+        "greeting": "Dear Dr. {{recipient_surname}},",
+        "intro": "Below is a consolidated status update for your manuscripts (generated on **{{date}}**). Please review and take the necessary actions.",
+        "dataNote": "*Note: The action summary reflects data as of {{date}} and may not include updates from the past 24–48 hours. Please disregard any items that have already been addressed.*",
+        "summaryHeading": "Action summary",
+        "countDecision": "**{{count}}** manuscript(s) ready for editorial recommendation / decision",
+        "countInvite": "**{{count}}** manuscript(s) require reviewer invitations",
+        "countPending": "**{{count}}** manuscript(s) awaiting reviewer reports *(EA to follow up)*",
+        "countDiscrepancy": "**{{count}}** manuscript(s) held for EA to verify a data discrepancy before this is actioned",
+        "countManual": "**{{count}}** manuscript(s) need manual EA review",
+        "riqTip": "**Reviewer Invitation Queue**\nIf you are not already using this feature, we encourage you to check out this 3-minute [video guide]({{riq_video_url}}).",
+        "discrepancyNote": "Invited and Accepted Reviewers are both blank for these, but a report was submitted anyway — please verify the real counts in ReX, then move each one into the correct section above.",
+        "closing": "Best Regards,"
+      }
+    },
+    "triageSummary": {
+      "name": "Triage Editor action summary",
+      "audience": "External Triage Editors",
+      "tab": "Editor, Triage & EA Drafts · Step 07",
+      "fields": {
+        "subject": "{{journal_prefix}}Action summary for your manuscripts",
+        "greeting": "Dear Dr. {{recipient_surname}},",
+        "intro": "Below is a consolidated status update for your manuscripts (generated on **{{date}}**). Please review and take the necessary actions.",
+        "dataNote": "*Note: The action summary reflects data as of {{date}} and may not include updates from the past 24–48 hours. Please disregard any items that have already been addressed.*",
+        "summaryHeading": "Action summary",
+        "countReviewDecision": "**{{count}}** manuscript(s) awaiting your review of the handling editor's decision",
+        "countInviteHE": "**{{count}}** manuscript(s) require handling editor invitations",
+        "countDiscrepancy": "**{{count}}** manuscript(s) held for EA to verify a data discrepancy before this is actioned",
+        "countManual": "**{{count}}** manuscript(s) need manual EA review",
+        "discrepancyNote": "Invited and Accepted Reviewers are both blank for these, but a report was submitted anyway — please verify the real counts in ReX, then move each one into the correct section above.",
+        "closing": "Best Regards,"
+      }
+    },
+    "eaV1Status": {
+      "name": "EA summary #1: V1 reviewer invitation status",
+      "audience": "EA mailbox (internal)",
+      "tab": "Editor, Triage & EA Drafts · Step 09",
+      "fields": {
+        "subject": "V1 Manuscripts – Reviewer Invitation Status ({{total}} total)",
+        "greeting": "Hi,",
+        "intro": "Reviewer invitation status across all Version 1 manuscripts, as of **{{date}}**:",
+        "summaryHeading": "Action summary",
+        "countNoHE": "**{{count}}** manuscript(s) – no Handling Editor assigned yet",
+        "countNoInvite": "**{{count}}** manuscript(s) – Handling Editor assigned, no reviewers invited yet",
+        "countInvitedNone": "**{{count}}** manuscript(s) – reviewers invited, none accepted",
+        "countAccepted": "**{{count}}** manuscript(s) – at least one reviewer accepted",
+        "headingNoHE": "No Handling Editor assigned",
+        "headingNoInvite": "Handling Editor assigned, no reviewers invited",
+        "headingInvitedNone": "Reviewers invited, none accepted",
+        "headingAccepted": "Reviewers invited and accepted",
+        "closing": "Best Regards,"
+      }
+    },
+    "eaStaleInvites": {
+      "name": "EA summary #2: stale reviewer invites",
+      "audience": "EA mailbox (internal)",
+      "tab": "Editor, Triage & EA Drafts · Step 09",
+      "fields": {
+        "subject": "Stale Reviewer Invites – More Than {{threshold}} Invited, None Accepted/Submitted ({{total}})",
+        "greeting": "Hi,",
+        "intro": "The following manuscripts have had more than {{threshold}} reviewer(s) invited, with zero accepted and zero submitted reports, as of **{{date}}**:",
+        "closing": "Best Regards,"
+      }
+    },
+    "reviewerReminder": {
+      "name": "Overdue reviewer reminder",
+      "audience": "External reviewers",
+      "tab": "Reviewer Reminders · Steps 04–05",
+      "fields": {
+        "subject": "Gentle Reminder: Review Pending for Manuscript {{manuscript_id}} – \"{{manuscript_title}}\"",
+        "greeting": "Dear Dr. {{recipient_surname}},",
+        "opening": "I hope you are doing well.",
+        "reminder": "This is a kind reminder that your review for the following manuscript is still pending:",
+        "manuscriptBlock": "Manuscript ID: {{manuscript_id}}\nManuscript Title: \"{{manuscript_title}}\"",
+        "location": "The manuscript is in your Referee Center at: [https://review.wiley.com/](https://review.wiley.com/).",
+        "support": "We truly value your expertise and the important role you play in upholding the quality of {{journal_name}}. If you are experiencing any difficulties accessing the system or require additional time to complete your review, please do not hesitate to let us know—we are happy to assist or accommodate an extension if needed.",
+        "thanks": "Thank you very much for your time and contribution. Your thoughtful review is greatly appreciated.",
+        "closing": "Yours sincerely,",
+        "signature": "{{sender_name}}\nEditorial Assistant, {{journal_code_upper}}"
+      }
+    },
+    "sectionLabels": {
+      "name": "Section headings and EA notes",
+      "audience": "Shared by editor and triage emails, workbooks and exports",
+      "tab": "All tabs",
+      "fields": {
+        "EDITOR_DECISION": "Handling Editor to Make Recommendation / Decision",
+        "EDITOR_INVITE": "Handling Editor to Invite Reviewers",
+        "REVIEWERS_PENDING": "Reviews Pending – EA follow-up only",
+        "EA_DISCREPANCY": "EA to Review Discrepancies",
+        "OTHER": "Needs manual review – EA",
+        "TRIAGE_INVITE_HE": "Triage Editor to Invite Handling Editors",
+        "TRIAGE_REVIEW_DECISION": "Triage Editor to Review Handling Editor Decision",
+        "TRIAGE_OTHER": "Needs manual review – EA",
+        "note_EDITOR_DECISION": "No EA action (Ready)",
+        "note_EDITOR_INVITE": "Escalate: No accepted reviewers",
+        "note_EDITOR_INVITE_ALL_OVERDUE": "Escalate: all accepted reviewers overdue",
+        "note_REVIEWERS_PENDING": "EA: Send reminder (pending report)",
+        "note_EA_DISCREPANCY": "EA: Verify Invited/Accepted counts, then move to correct section",
+        "note_OTHER": "Needs manual review",
+        "note_TRIAGE_INVITE_HE": "EA: Awaiting triage action",
+        "note_TRIAGE_REVIEW_DECISION": "EA: Awaiting triage action",
+        "note_TRIAGE_OTHER": "Needs manual review"
+      }
+    }
+  }
+}

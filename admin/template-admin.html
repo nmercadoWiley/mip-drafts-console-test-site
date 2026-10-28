@@ -1,0 +1,734 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MIP Template Admin</title>
+<style>
+/* Layout: three-column editing desk — template list · field editor · live email preview. Release bar pinned at the top. */
+:root{
+  --bg:#f3f4f1; --surface:#ffffff; --surface-2:#eceee8; --line:#d6dad1; --fg:#1d2420; --muted:#5d6862;
+  --accent:#1f5f4f; --accent-soft:#e1efe9; --warn:#8a4d00; --warn-bg:#fdf0dc; --bad:#a3221c; --bad-bg:#fde8e7; --ok:#1d6b45; --ok-bg:#e2f3e9;
+  --mark:#fff3bf;
+  --f-body:"Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+  --f-mono:Consolas, "Cascadia Mono", "SFMono-Regular", Menlo, monospace;
+  --f-mail:"Times New Roman", Times, serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.5 var(--f-body)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.top{position:sticky;top:0;z-index:5;background:var(--surface);border-bottom:1px solid var(--line);padding:10px 18px;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center}
+.brand{display:flex;flex-direction:column;gap:0;margin-right:auto;min-width:0}
+.brand b{font-size:15px}
+.brand span{font-size:12px;color:var(--muted)}
+.meta{font:12px var(--f-mono);color:var(--muted);display:flex;gap:12px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--surface);padding:6px 12px;border-radius:6px;font-weight:600;font-size:13px}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.small{padding:3px 9px;font-size:12px}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.grid{display:grid;grid-template-columns:240px minmax(0,1fr) minmax(0,1fr);gap:0;min-height:calc(100vh - 58px)}
+nav{border-right:1px solid var(--line);background:var(--surface);padding:12px 0;overflow:auto}
+nav h2{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:6px 16px 8px}
+.tpl{display:block;width:100%;text-align:left;border:0;background:none;padding:9px 16px;border-left:3px solid transparent}
+.tpl:hover{background:var(--surface-2)}
+.tpl[aria-current="true"]{background:var(--accent-soft);border-left-color:var(--accent)}
+.tpl b{display:block;font-size:13px}
+.tpl small{display:block;color:var(--muted);font-size:12px}
+.badges{display:flex;gap:4px;margin-top:3px}
+.badge{font:600 10.5px var(--f-body);padding:1px 6px;border-radius:999px}
+.b-mod{background:var(--warn-bg);color:var(--warn)} .b-err{background:var(--bad-bg);color:var(--bad)}
+.editor{padding:16px 20px;overflow:auto;min-width:0}
+.editor h1{font-size:18px;margin:0}
+.editor .sub{color:var(--muted);font-size:12.5px;margin:2px 0 14px}
+.help{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:12.5px;color:var(--muted);margin-bottom:14px}
+.help code{font:12px var(--f-mono);background:var(--surface-2);padding:0 4px;border-radius:3px;color:var(--fg)}
+.field{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-bottom:10px}
+.field.modified{border-left:3px solid var(--warn)}
+.field.error{border-left:3px solid var(--bad)}
+.fhead{display:flex;gap:8px;align-items:baseline;justify-content:space-between}
+.fhead label{font-weight:600;font-size:13px}
+.fhead .hint{font-size:12px;color:var(--muted)}
+textarea{width:100%;min-height:38px;resize:vertical;border:1px solid var(--line);border-radius:6px;padding:7px 9px;margin-top:6px;font:13px/1.45 var(--f-mono);background:#fcfcfa}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.chip{font:11.5px var(--f-mono);border:1px dashed var(--line);background:var(--surface-2);border-radius:4px;padding:1px 6px}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+.msg{font-size:12px;margin-top:5px}
+.msg.err{color:var(--bad)} .msg.warn{color:var(--warn)}
+.preview{border-left:1px solid var(--line);padding:16px 20px;overflow:auto;background:var(--surface-2);min-width:0}
+.preview h2{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 8px}
+.mailhead{background:var(--surface);border:1px solid var(--line);border-bottom:0;border-radius:8px 8px 0 0;padding:8px 12px;font-size:12.5px}
+.mailhead div{display:flex;gap:8px}
+.mailhead span{color:var(--muted);min-width:56px}
+.mail{background:#fff;border:1px solid var(--line);border-radius:0 0 8px 8px;padding:14px 18px;font:11pt/1.4 var(--f-mail);color:#111;overflow-x:auto}
+.mail h3{font-size:12.5pt;margin:14px 0 6px}
+.mail table{border-collapse:collapse;width:100%;font-size:10pt}
+.mail td{border:1px solid #d0d0d0;padding:4px 6px}
+.mail .mock td{color:#666;background:#fafafa}
+.mail .mockhead td{background:#F3F5F7;font-weight:600;color:#333}
+.unknown{background:var(--mark);outline:1px solid #e0b400}
+.labels table{width:100%;border-collapse:collapse;font-size:13px;background:#fff}
+.labels td,.labels th{border:1px solid var(--line);padding:6px 8px;text-align:left}
+.panel{position:fixed;inset:0;background:rgba(20,26,22,.38);display:flex;align-items:flex-start;justify-content:center;padding:6vh 16px;z-index:20}
+.panel[hidden]{display:none}
+.card{background:var(--surface);border-radius:10px;max-width:640px;width:100%;padding:18px 20px;box-shadow:0 10px 40px rgba(0,0,0,.2);max-height:86vh;overflow:auto}
+.card h2{margin:0 0 4px;font-size:17px}
+.card p{margin:4px 0 12px;color:var(--muted);font-size:13px}
+.row{display:grid;grid-template-columns:140px 1fr;gap:8px 12px;align-items:center;margin-bottom:10px}
+.row input,.row textarea{width:100%;border:1px solid var(--line);border-radius:6px;padding:6px 8px;margin:0}
+.changes{font-size:12.5px;border:1px solid var(--line);border-radius:6px;max-height:220px;overflow:auto;margin:6px 0 12px}
+.changes div{padding:5px 9px;border-bottom:1px solid var(--line)}
+.changes div:last-child{border-bottom:0}
+.changes code{font:11.5px var(--f-mono)}
+.actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#1d2420;color:#fff;padding:9px 14px;border-radius:8px;font-size:13px;z-index:30;max-width:90vw}
+.toast[hidden]{display:none}
+.banner{margin:0 0 12px;padding:9px 12px;border-radius:8px;font-size:13px}
+.banner.warn{background:var(--warn-bg);color:var(--warn)}
+.banner.bad{background:var(--bad-bg);color:var(--bad)}
+@media (max-width:1100px){ .grid{grid-template-columns:200px minmax(0,1fr)} .preview{grid-column:1/-1;border-left:0;border-top:1px solid var(--line)} }
+@media (max-width:700px){ .grid{grid-template-columns:1fr} nav{border-right:0;border-bottom:1px solid var(--line)} .row{grid-template-columns:1fr} }
+@media (prefers-reduced-motion:reduce){ *{transition:none!important} }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand"><b>MIP Template Admin</b><span>Edit the wording of every email the MIP Drafts Console writes. For PRP template owners, not for EAs.</span></div>
+  <div class="meta" id="metaLine"></div>
+  <button class="btn" id="openBtn" type="button">Open templates…</button>
+  <button class="btn primary" id="releaseBtn" type="button">Save &amp; release…</button>
+  <input type="file" id="openFile" accept=".json,.html,.htm" hidden>
+  <input type="file" id="consoleFile" accept=".html,.htm" hidden>
+</header>
+
+<div class="grid">
+  <nav aria-label="Templates">
+    <h2>Templates</h2>
+    <div id="tplList"></div>
+    <h2 style="margin-top:18px">Placeholders</h2>
+    <p style="margin:0 16px;font-size:12px;color:var(--muted)">Click a placeholder under a field to insert it. Placeholders that a template doesn't support are highlighted in the preview and block release.</p>
+  </nav>
+  <main class="editor" id="editor"></main>
+  <aside class="preview" aria-label="Preview">
+    <h2>Preview (sample data)</h2>
+    <div id="preview"></div>
+  </aside>
+</div>
+
+<div class="panel" id="openPanel" hidden>
+  <div class="card" role="dialog" aria-modal="true" aria-labelledby="openTitle">
+    <h2 id="openTitle">Open templates</h2>
+    <p>Start from the approved templates in the repo, or from the copy inside a console file.</p>
+    <div class="actions" style="justify-content:flex-start;flex-direction:column;align-items:stretch">
+      <button class="btn" type="button" data-open="json"><b>templates/templates.json</b> from the repo (recommended)</button>
+      <button class="btn" type="button" data-open="html"><b>mip-drafts-console.html</b>: read the templates built into it</button>
+      <button class="btn" type="button" data-open="defaults">Built-in defaults that shipped with this admin page</button>
+    </div>
+    <div class="actions" style="margin-top:14px"><button class="btn" type="button" data-close>Cancel</button></div>
+  </div>
+</div>
+
+<div class="panel" id="releasePanel" hidden>
+  <div class="card" role="dialog" aria-modal="true" aria-labelledby="relTitle">
+    <h2 id="relTitle">Save &amp; release templates</h2>
+    <p>Releasing produces two files. Commit both to the repo from GitHub Desktop: <code>templates/templates.json</code> and an updated <code>mip-drafts-console.html</code> that carries the new wording. EAs only ever see the console file.</p>
+    <div id="relErrors"></div>
+    <div class="row"><label for="relVersion">New version</label><input id="relVersion" autocomplete="off"></div>
+    <div class="row"><label for="relApprover">Approved by</label><input id="relApprover" placeholder="e.g. Iris Poesse" autocomplete="name"></div>
+    <div class="row"><label for="relNote">What changed</label><textarea id="relNote" rows="2" placeholder="e.g. Shortened the editor intro; new subject line agreed by PRP"></textarea></div>
+    <b style="font-size:13px">Changes since the file you opened</b>
+    <div class="changes" id="relChanges"></div>
+    <div class="actions">
+      <button class="btn" type="button" data-close>Cancel</button>
+      <button class="btn" type="button" id="dlJsonBtn">Download templates.json</button>
+      <button class="btn primary" type="button" id="dlConsoleBtn">Update console file…</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script type="application/json" id="builtinDefaults">
+{
+  "schema": 1,
+  "version": "1.0.0",
+  "updated": "2026-10-01",
+  "approvedBy": "",
+  "changeNote": "Initial version: wording moved out of the code unchanged from v2.1.",
+  "history": [],
+  "templates": {
+    "editorSummary": {
+      "name": "Handling Editor action summary",
+      "audience": "External Handling Editors",
+      "tab": "Editor, Triage & EA Drafts · Step 06",
+      "fields": {
+        "subject": "{{journal_prefix}}Action summary for your manuscripts",
+        "greeting": "Dear Dr. {{recipient_surname}},",
+        "intro": "Below is a consolidated status update for your manuscripts (generated on **{{date}}**). Please review and take the necessary actions.",
+        "dataNote": "*Note: The action summary reflects data as of {{date}} and may not include updates from the past 24–48 hours. Please disregard any items that have already been addressed.*",
+        "summaryHeading": "Action summary",
+        "countDecision": "**{{count}}** manuscript(s) ready for editorial recommendation / decision",
+        "countInvite": "**{{count}}** manuscript(s) require reviewer invitations",
+        "countPending": "**{{count}}** manuscript(s) awaiting reviewer reports *(EA to follow up)*",
+        "countDiscrepancy": "**{{count}}** manuscript(s) held for EA to verify a data discrepancy before this is actioned",
+        "countManual": "**{{count}}** manuscript(s) need manual EA review",
+        "riqTip": "**Reviewer Invitation Queue**\nIf you are not already using this feature, we encourage you to check out this 3-minute [video guide]({{riq_video_url}}).",
+        "discrepancyNote": "Invited and Accepted Reviewers are both blank for these, but a report was submitted anyway — please verify the real counts in ReX, then move each one into the correct section above.",
+        "closing": "Best Regards,"
+      }
+    },
+    "triageSummary": {
+      "name": "Triage Editor action summary",
+      "audience": "External Triage Editors",
+      "tab": "Editor, Triage & EA Drafts · Step 07",
+      "fields": {
+        "subject": "{{journal_prefix}}Action summary for your manuscripts",
+        "greeting": "Dear Dr. {{recipient_surname}},",
+        "intro": "Below is a consolidated status update for your manuscripts (generated on **{{date}}**). Please review and take the necessary actions.",
+        "dataNote": "*Note: The action summary reflects data as of {{date}} and may not include updates from the past 24–48 hours. Please disregard any items that have already been addressed.*",
+        "summaryHeading": "Action summary",
+        "countReviewDecision": "**{{count}}** manuscript(s) awaiting your review of the handling editor's decision",
+        "countInviteHE": "**{{count}}** manuscript(s) require handling editor invitations",
+        "countDiscrepancy": "**{{count}}** manuscript(s) held for EA to verify a data discrepancy before this is actioned",
+        "countManual": "**{{count}}** manuscript(s) need manual EA review",
+        "discrepancyNote": "Invited and Accepted Reviewers are both blank for these, but a report was submitted anyway — please verify the real counts in ReX, then move each one into the correct section above.",
+        "closing": "Best Regards,"
+      }
+    },
+    "eaV1Status": {
+      "name": "EA summary #1: V1 reviewer invitation status",
+      "audience": "EA mailbox (internal)",
+      "tab": "Editor, Triage & EA Drafts · Step 09",
+      "fields": {
+        "subject": "V1 Manuscripts – Reviewer Invitation Status ({{total}} total)",
+        "greeting": "Hi,",
+        "intro": "Reviewer invitation status across all Version 1 manuscripts, as of **{{date}}**:",
+        "summaryHeading": "Action summary",
+        "countNoHE": "**{{count}}** manuscript(s) – no Handling Editor assigned yet",
+        "countNoInvite": "**{{count}}** manuscript(s) – Handling Editor assigned, no reviewers invited yet",
+        "countInvitedNone": "**{{count}}** manuscript(s) – reviewers invited, none accepted",
+        "countAccepted": "**{{count}}** manuscript(s) – at least one reviewer accepted",
+        "headingNoHE": "No Handling Editor assigned",
+        "headingNoInvite": "Handling Editor assigned, no reviewers invited",
+        "headingInvitedNone": "Reviewers invited, none accepted",
+        "headingAccepted": "Reviewers invited and accepted",
+        "closing": "Best Regards,"
+      }
+    },
+    "eaStaleInvites": {
+      "name": "EA summary #2: stale reviewer invites",
+      "audience": "EA mailbox (internal)",
+      "tab": "Editor, Triage & EA Drafts · Step 09",
+      "fields": {
+        "subject": "Stale Reviewer Invites – More Than {{threshold}} Invited, None Accepted/Submitted ({{total}})",
+        "greeting": "Hi,",
+        "intro": "The following manuscripts have had more than {{threshold}} reviewer(s) invited, with zero accepted and zero submitted reports, as of **{{date}}**:",
+        "closing": "Best Regards,"
+      }
+    },
+    "reviewerReminder": {
+      "name": "Overdue reviewer reminder",
+      "audience": "External reviewers",
+      "tab": "Reviewer Reminders · Steps 04–05",
+      "fields": {
+        "subject": "Gentle Reminder: Review Pending for Manuscript {{manuscript_id}} – \"{{manuscript_title}}\"",
+        "greeting": "Dear Dr. {{recipient_surname}},",
+        "opening": "I hope you are doing well.",
+        "reminder": "This is a kind reminder that your review for the following manuscript is still pending:",
+        "manuscriptBlock": "Manuscript ID: {{manuscript_id}}\nManuscript Title: \"{{manuscript_title}}\"",
+        "location": "The manuscript is in your Referee Center at: [https://review.wiley.com/](https://review.wiley.com/).",
+        "support": "We truly value your expertise and the important role you play in upholding the quality of {{journal_name}}. If you are experiencing any difficulties accessing the system or require additional time to complete your review, please do not hesitate to let us know—we are happy to assist or accommodate an extension if needed.",
+        "thanks": "Thank you very much for your time and contribution. Your thoughtful review is greatly appreciated.",
+        "closing": "Yours sincerely,",
+        "signature": "{{sender_name}}\nEditorial Assistant, {{journal_code_upper}}"
+      }
+    },
+    "sectionLabels": {
+      "name": "Section headings and EA notes",
+      "audience": "Shared by editor and triage emails, workbooks and exports",
+      "tab": "All tabs",
+      "fields": {
+        "EDITOR_DECISION": "Handling Editor to Make Recommendation / Decision",
+        "EDITOR_INVITE": "Handling Editor to Invite Reviewers",
+        "REVIEWERS_PENDING": "Reviews Pending – EA follow-up only",
+        "EA_DISCREPANCY": "EA to Review Discrepancies",
+        "OTHER": "Needs manual review – EA",
+        "TRIAGE_INVITE_HE": "Triage Editor to Invite Handling Editors",
+        "TRIAGE_REVIEW_DECISION": "Triage Editor to Review Handling Editor Decision",
+        "TRIAGE_OTHER": "Needs manual review – EA",
+        "note_EDITOR_DECISION": "No EA action (Ready)",
+        "note_EDITOR_INVITE": "Escalate: No accepted reviewers",
+        "note_EDITOR_INVITE_ALL_OVERDUE": "Escalate: all accepted reviewers overdue",
+        "note_REVIEWERS_PENDING": "EA: Send reminder (pending report)",
+        "note_EA_DISCREPANCY": "EA: Verify Invited/Accepted counts, then move to correct section",
+        "note_OTHER": "Needs manual review",
+        "note_TRIAGE_INVITE_HE": "EA: Awaiting triage action",
+        "note_TRIAGE_REVIEW_DECISION": "EA: Awaiting triage action",
+        "note_TRIAGE_OTHER": "Needs manual review"
+      }
+    }
+  }
+}
+</script>
+<script>
+/* ============================================================
+   v2.2 TEMPLATE ENGINE
+   All editable email wording lives in the embedded <script id="mipTemplates"> JSON block
+   (source of truth: templates/templates.json in the repo). Admins edit it with
+   admin/template-admin.html. Tables and manuscript lists are always generated by the tool;
+   templates only hold wording, with {{placeholders}} and light formatting:
+   **bold**, *italic*, [link text](url), and line breaks.
+============================================================ */
+let MIP_TEMPLATES = {templates: {}};
+function loadTemplates(){
+  try {
+    const node = document.getElementById('mipTemplates');
+    MIP_TEMPLATES = JSON.parse(node.textContent);
+    if (!MIP_TEMPLATES || !MIP_TEMPLATES.templates) throw new Error('No "templates" object');
+  } catch (e) {
+    console.error('Email templates could not be read. Drafts will be missing wording.', e);
+    MIP_TEMPLATES = {templates: {}};
+  }
+}
+function T(tplKey, field){
+  const t = (MIP_TEMPLATES.templates || {})[tplKey];
+  const v = t && t.fields ? t.fields[field] : undefined;
+  return typeof v === 'string' ? v : '';
+}
+function tplEsc(s){
+  return String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function tplAscii(s){
+  let out = '';
+  for (const ch of s) out += ch.codePointAt(0) > 127 ? `&#${ch.codePointAt(0)};` : ch;
+  return out;
+}
+const TPL_PLACEHOLDER_RE = /\{\{\s*([a-z0-9_]+)\s*\}\}/gi;
+/* Wording → email HTML. Formatting is applied before placeholders are filled, so data values
+   (titles, names) are always escaped and can never turn into formatting or markup. */
+function tplHtml(text, vars){
+  let h = tplEsc(text);
+  h = h.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (m, label, url) => `<a href="${url}" target="_blank" rel="noopener noreferrer">${label}</a>`);
+  h = h.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\*(.+?)\*/g, '<i>$1</i>');
+  h = h.replace(TPL_PLACEHOLDER_RE, (m, k) => (vars && Object.prototype.hasOwnProperty.call(vars, k)) ? tplEsc(vars[k]) : m);
+  h = h.replace(/\r?\n/g, '<br>');
+  return tplAscii(h);
+}
+/* Wording → plain text (subject lines). */
+function tplText(text, vars){
+  return String(text)
+    .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, '$1')
+    .replace(/\*\*(.+?)\*\*/g, '$1').replace(/\*(.+?)\*/g, '$1')
+    .replace(TPL_PLACEHOLDER_RE, (m, k) => (vars && Object.prototype.hasOwnProperty.call(vars, k)) ? String(vars[k]) : m);
+}
+
+
+/* ============================================================
+   FIELD DESCRIPTIONS — labels, help and which placeholders each field accepts.
+   Keep in step with the console's buildPersonEmail / renderEaDrafts / rrBuildReminderEmail.
+============================================================ */
+const P_EDITOR = ['recipient_surname','recipient_name','journal_code','journal_prefix','date','sign_off_name'];
+const P_REVIEWER = ['recipient_surname','recipient_name','manuscript_id','manuscript_title','journal_name','journal_code_upper','sender_name'];
+const META = {
+  editorSummary: {
+    order: ['subject','greeting','intro','dataNote','summaryHeading','countDecision','countInvite','countPending','countDiscrepancy','countManual','riqTip','discrepancyNote','closing'],
+    placeholders: P_EDITOR.concat(['riq_video_url']),
+    fields: {
+      subject: {label:'Subject line', required:true, hint:'{{journal_prefix}} is "JDE - " or blank'},
+      greeting: {label:'Greeting', required:true},
+      intro: {label:'Opening paragraph'},
+      dataNote: {label:'Data freshness note', hint:'Leave blank to remove'},
+      summaryHeading: {label:'Summary heading', required:true},
+      countDecision: {label:'Bullet: ready for decision', required:true, count:true},
+      countInvite: {label:'Bullet: needs reviewer invitations', required:true, count:true},
+      countPending: {label:'Bullet: awaiting reviewer reports', required:true, count:true, hint:'Hidden when Reviews Pending goes to a separate sheet'},
+      countDiscrepancy: {label:'Bullet: data discrepancy', required:true, count:true, hint:'Only shown when there are discrepancies'},
+      countManual: {label:'Bullet: needs manual EA review', required:true, count:true, hint:'Only shown when needed'},
+      riqTip: {label:'Reviewer Invitation Queue tip', hint:'Shown under "Invite Reviewers". Leave blank to remove'},
+      discrepancyNote: {label:'Discrepancy section note'},
+      closing: {label:'Closing line', required:true, hint:'Followed by the sign-off name and journal code, added by the tool'},
+    }
+  },
+  triageSummary: {
+    order: ['subject','greeting','intro','dataNote','summaryHeading','countReviewDecision','countInviteHE','countDiscrepancy','countManual','discrepancyNote','closing'],
+    placeholders: P_EDITOR,
+    fields: {
+      subject: {label:'Subject line', required:true, hint:'{{journal_prefix}} is "JDE - " or blank'},
+      greeting: {label:'Greeting', required:true},
+      intro: {label:'Opening paragraph'},
+      dataNote: {label:'Data freshness note', hint:'Leave blank to remove'},
+      summaryHeading: {label:'Summary heading', required:true},
+      countReviewDecision: {label:'Bullet: review Handling Editor decision', required:true, count:true},
+      countInviteHE: {label:'Bullet: invite Handling Editors', required:true, count:true},
+      countDiscrepancy: {label:'Bullet: data discrepancy', required:true, count:true},
+      countManual: {label:'Bullet: needs manual EA review', required:true, count:true},
+      discrepancyNote: {label:'Discrepancy section note'},
+      closing: {label:'Closing line', required:true, hint:'Followed by the sign-off name and journal code'},
+    }
+  },
+  eaV1Status: {
+    order: ['subject','greeting','intro','summaryHeading','countNoHE','countNoInvite','countInvitedNone','countAccepted','headingNoHE','headingNoInvite','headingInvitedNone','headingAccepted','closing'],
+    placeholders: ['date','total','sign_off_name'],
+    fields: {
+      subject: {label:'Subject line', required:true, hint:'{{total}} = number of V1 manuscripts'},
+      greeting: {label:'Greeting', required:true},
+      intro: {label:'Opening line', required:true},
+      summaryHeading: {label:'Summary heading', required:true},
+      countNoHE: {label:'Bullet: no Handling Editor', required:true, count:true},
+      countNoInvite: {label:'Bullet: no reviewers invited', required:true, count:true},
+      countInvitedNone: {label:'Bullet: invited, none accepted', required:true, count:true},
+      countAccepted: {label:'Bullet: at least one accepted', required:true, count:true},
+      headingNoHE: {label:'Table heading: no Handling Editor', required:true},
+      headingNoInvite: {label:'Table heading: no reviewers invited', required:true},
+      headingInvitedNone: {label:'Table heading: invited, none accepted', required:true},
+      headingAccepted: {label:'Table heading: accepted', required:true},
+      closing: {label:'Closing line', required:true},
+    }
+  },
+  eaStaleInvites: {
+    order: ['subject','greeting','intro','closing'],
+    placeholders: ['date','total','threshold','sign_off_name'],
+    fields: {
+      subject: {label:'Subject line', required:true, hint:'{{threshold}} = stale-invite setting, {{total}} = manuscripts listed'},
+      greeting: {label:'Greeting', required:true},
+      intro: {label:'Opening line', required:true},
+      closing: {label:'Closing line', required:true},
+    }
+  },
+  reviewerReminder: {
+    order: ['subject','greeting','opening','reminder','manuscriptBlock','location','support','thanks','closing','signature'],
+    placeholders: P_REVIEWER,
+    fields: {
+      subject: {label:'Subject line', required:true},
+      greeting: {label:'Greeting', required:true},
+      opening: {label:'Opening line'},
+      reminder: {label:'Reminder line', required:true},
+      manuscriptBlock: {label:'Manuscript details', required:true, hint:'Keep {{manuscript_id}} so reviewers can find the paper'},
+      location: {label:'Where to find it'},
+      support: {label:'Support / extension paragraph'},
+      thanks: {label:'Thanks'},
+      closing: {label:'Closing line', required:true},
+      signature: {label:'Signature', required:true, hint:'{{sender_name}} comes from "Your name" on the Reviewer Reminders tab'},
+    }
+  },
+  sectionLabels: {
+    order: ['EDITOR_DECISION','EDITOR_INVITE','REVIEWERS_PENDING','EA_DISCREPANCY','OTHER','TRIAGE_INVITE_HE','TRIAGE_REVIEW_DECISION','TRIAGE_OTHER',
+            'note_EDITOR_DECISION','note_EDITOR_INVITE','note_EDITOR_INVITE_ALL_OVERDUE','note_REVIEWERS_PENDING','note_EA_DISCREPANCY','note_OTHER','note_TRIAGE_INVITE_HE','note_TRIAGE_REVIEW_DECISION','note_TRIAGE_OTHER'],
+    placeholders: [],
+    plain: true,
+    fields: {
+      EDITOR_DECISION:{label:'Section: ready for decision', required:true},
+      EDITOR_INVITE:{label:'Section: invite reviewers', required:true},
+      REVIEWERS_PENDING:{label:'Section: reviews pending', required:true},
+      EA_DISCREPANCY:{label:'Section: data discrepancy', required:true},
+      OTHER:{label:'Section: manual review (editor)', required:true},
+      TRIAGE_INVITE_HE:{label:'Section: triage – invite Handling Editors', required:true},
+      TRIAGE_REVIEW_DECISION:{label:'Section: triage – review decision', required:true},
+      TRIAGE_OTHER:{label:'Section: manual review (triage)', required:true},
+      note_EDITOR_DECISION:{label:'EA note: ready for decision'},
+      note_EDITOR_INVITE:{label:'EA note: invite reviewers'},
+      note_EDITOR_INVITE_ALL_OVERDUE:{label:'EA note: all accepted reviewers overdue'},
+      note_REVIEWERS_PENDING:{label:'EA note: reviews pending'},
+      note_EA_DISCREPANCY:{label:'EA note: discrepancy'},
+      note_OTHER:{label:'EA note: manual review'},
+      note_TRIAGE_INVITE_HE:{label:'EA note: triage – invite'},
+      note_TRIAGE_REVIEW_DECISION:{label:'EA note: triage – decision'},
+      note_TRIAGE_OTHER:{label:'EA note: triage – manual'},
+    }
+  },
+};
+
+/* Sample values for the preview. Fictional, so no real manuscript data appears in this page. */
+const SAMPLE = {
+  recipient_name:'Jane Example', recipient_surname:'Example', journal_code:'JEX', journal_prefix:'JEX - ',
+  date:'01-Oct-2026', sign_off_name:'Editorial Office', riq_video_url:'https://players.brightcove.net/3806881048001/default_default/index.html?videoId=6394687314112',
+  total:'12', threshold:'60', manuscript_id:'1234567', manuscript_title:'A sample manuscript title', journal_name:'Journal of Examples',
+  journal_code_upper:'JEX', sender_name:'Alex Sample', count:'3',
+};
+
+/* ============================================================ STATE */
+let DOC = null;          // the templates document being edited
+let BASE = null;         // the document as opened, for change tracking
+let SOURCE = '';         // where it came from
+let CURRENT = 'editorSummary';
+const $ = id => document.getElementById(id);
+const clone = o => JSON.parse(JSON.stringify(o));
+const DRAFT_KEY = 'mipTemplateAdminDraft';
+
+function toast(msg){ const t=$('toast'); t.textContent=msg; t.hidden=false; clearTimeout(toast._t); toast._t=setTimeout(()=>t.hidden=true, 3200); }
+function saveDraft(){ try{ localStorage.setItem(DRAFT_KEY, JSON.stringify({doc:DOC, base:BASE, source:SOURCE, at:new Date().toISOString()})); }catch(e){} }
+function loadDraft(){ try{ return JSON.parse(localStorage.getItem(DRAFT_KEY)||'null'); }catch(e){ return null; } }
+function clearDraft(){ try{ localStorage.removeItem(DRAFT_KEY); }catch(e){} }
+
+function setDoc(doc, source){
+  if (!doc || !doc.templates) throw new Error('This file has no "templates" section.');
+  DOC = clone(doc); BASE = clone(doc); SOURCE = source;
+  // Fill in any template or field missing from an older file with the shipped defaults
+  const defs = builtinDefaults();
+  Object.keys(defs.templates).forEach(k => {
+    if (!DOC.templates[k]) DOC.templates[k] = clone(defs.templates[k]);
+    Object.keys(defs.templates[k].fields).forEach(f => { if (typeof DOC.templates[k].fields[f] !== 'string') DOC.templates[k].fields[f] = defs.templates[k].fields[f]; });
+  });
+  clearDraft();
+  renderAll();
+}
+function builtinDefaults(){ return JSON.parse($('builtinDefaults').textContent); }
+
+/* ============================================================ VALIDATION */
+function fieldIssues(tk, fk, value){
+  const meta = META[tk], fm = meta.fields[fk] || {};
+  const issues = [];
+  if (fm.required && !String(value).trim()) issues.push({level:'err', text:'Required. The email would be missing this line.'});
+  const allowed = new Set(meta.placeholders.concat(fm.count ? ['count'] : []));
+  const used = [...String(value).matchAll(/\{\{\s*([a-z0-9_]+)\s*\}\}/gi)].map(m => m[1]);
+  const bad = [...new Set(used.filter(u => !allowed.has(u)))];
+  if (bad.length) issues.push({level:'err', text:`Not available here: ${bad.map(b=>'{{'+b+'}}').join(', ')}`});
+  if (/\{\{[^}]*$|^[^{]*\}\}/.test(value) || (String(value).match(/\{\{/g)||[]).length !== (String(value).match(/\}\}/g)||[]).length) issues.push({level:'err', text:'Unbalanced {{ }} braces.'});
+  if (meta.plain && /[*\[\]]/.test(value)) issues.push({level:'warn', text:'Headings and notes are plain text; * and [ ] are shown as typed.'});
+  if (fm.count && !used.includes('count')) issues.push({level:'warn', text:'No {{count}}: the number won\'t appear in this bullet.'});
+  if (tk==='reviewerReminder' && fk==='manuscriptBlock' && !used.includes('manuscript_id')) issues.push({level:'warn', text:'Reviewers need the manuscript ID.'});
+  return issues;
+}
+function templateStatus(tk){
+  const t = DOC.templates[tk]; let err = 0, mod = 0;
+  META[tk].order.forEach(fk => {
+    if (fieldIssues(tk, fk, t.fields[fk]).some(i => i.level==='err')) err++;
+    if (BASE.templates[tk] && BASE.templates[tk].fields[fk] !== t.fields[fk]) mod++;
+  });
+  return {err, mod};
+}
+function allErrors(){
+  const out = [];
+  Object.keys(META).forEach(tk => META[tk].order.forEach(fk => fieldIssues(tk, fk, DOC.templates[tk].fields[fk]).filter(i=>i.level==='err').forEach(i => out.push(`${DOC.templates[tk].name} → ${META[tk].fields[fk].label}: ${i.text}`))));
+  return out;
+}
+function changeList(){
+  const out = [];
+  Object.keys(META).forEach(tk => META[tk].order.forEach(fk => {
+    const a = BASE.templates[tk] ? BASE.templates[tk].fields[fk] : undefined, b = DOC.templates[tk].fields[fk];
+    if (a !== b) out.push({tk, fk, a, b});
+  }));
+  return out;
+}
+
+/* ============================================================ RENDER */
+function renderAll(){ renderMeta(); renderList(); renderEditor(); renderPreview(); }
+function renderMeta(){
+  const v = DOC.version ? `v${DOC.version}` : 'no version';
+  const ap = DOC.approvedBy ? `approved by ${DOC.approvedBy}` : 'not yet approved';
+  const n = changeList().length;
+  $('metaLine').innerHTML = `<span>${tplEsc(SOURCE)}</span><span>${tplEsc(v)} · ${tplEsc(ap)}</span><span>${n ? n + ' unsaved change' + (n>1?'s':'') : 'no changes'}</span>`;
+}
+function renderList(){
+  $('tplList').innerHTML = Object.keys(META).map(tk => {
+    const t = DOC.templates[tk], s = templateStatus(tk);
+    return `<button class="tpl" type="button" data-tk="${tk}" aria-current="${tk===CURRENT}"><b>${tplEsc(t.name)}</b><small>${tplEsc(t.audience||'')}</small>
+      <span class="badges">${s.mod?`<span class="badge b-mod">${s.mod} changed</span>`:''}${s.err?`<span class="badge b-err">${s.err} to fix</span>`:''}</span></button>`;
+  }).join('');
+  $('tplList').querySelectorAll('[data-tk]').forEach(b => b.onclick = () => { CURRENT = b.dataset.tk; renderAll(); $('editor').scrollTop = 0; });
+}
+function renderEditor(){
+  const tk = CURRENT, t = DOC.templates[tk], meta = META[tk];
+  let h = `<h1>${tplEsc(t.name)}</h1><div class="sub">${tplEsc(t.audience||'')} · ${tplEsc(t.tab||'')}</div>`;
+  h += meta.plain
+    ? `<div class="help">Plain text. These names appear as section headings in editor emails and workbooks, and as the "Email Drafted Action" values in the Step 12 export. The EA notes appear in the last-but-one column of editor email tables.</div>`
+    : `<div class="help">Formatting: <code>**bold**</code> · <code>*italic*</code> · <code>[link text](https://…)</code> · press Enter for a line break. Tables and manuscript lists are added by the tool and can't be edited here.</div>`;
+  meta.order.forEach(fk => {
+    const fm = meta.fields[fk], val = t.fields[fk], issues = fieldIssues(tk, fk, val);
+    const modified = BASE.templates[tk] && BASE.templates[tk].fields[fk] !== val;
+    const chips = meta.placeholders.concat(fm.count ? ['count'] : []);
+    h += `<div class="field${issues.some(i=>i.level==='err')?' error':''}${modified?' modified':''}">
+      <div class="fhead"><label for="f_${fk}">${tplEsc(fm.label)}${fm.required?' <span style="color:var(--bad)" aria-hidden="true">*</span>':''}</label>
+        <button class="btn small" type="button" data-reset="${fk}"${modified?'':' hidden'}>Undo change</button></div>
+      ${fm.hint?`<div class="hint" style="font-size:12px;color:var(--muted)">${tplEsc(fm.hint)}</div>`:''}
+      <textarea id="f_${fk}" data-fk="${fk}" rows="${Math.min(8, Math.max(1, Math.ceil(String(val).length/70) + (String(val).match(/\n/g)||[]).length))}">${tplEsc(val)}</textarea>
+      ${chips.length?`<div class="chips">${chips.map(c=>`<button class="chip" type="button" data-ins="${c}" data-target="f_${fk}">{{${c}}}</button>`).join('')}</div>`:''}
+      ${issues.map(i=>`<div class="msg ${i.level}">${tplEsc(i.text)}</div>`).join('')}
+    </div>`;
+  });
+  $('editor').innerHTML = h;
+  $('editor').querySelectorAll('textarea[data-fk]').forEach(ta => {
+    ta.addEventListener('input', () => { DOC.templates[CURRENT].fields[ta.dataset.fk] = ta.value; saveDraft(); renderMeta(); renderList(); renderPreview(); refreshFieldMessages(ta); });
+  });
+  $('editor').querySelectorAll('[data-ins]').forEach(b => b.onclick = () => {
+    const ta = $(b.dataset.target), ins = `{{${b.dataset.ins}}}`;
+    const s = ta.selectionStart ?? ta.value.length, e = ta.selectionEnd ?? ta.value.length;
+    ta.value = ta.value.slice(0, s) + ins + ta.value.slice(e);
+    ta.dispatchEvent(new Event('input')); ta.focus(); ta.selectionStart = ta.selectionEnd = s + ins.length;
+  });
+  $('editor').querySelectorAll('[data-reset]').forEach(b => b.onclick = () => { DOC.templates[CURRENT].fields[b.dataset.reset] = BASE.templates[CURRENT].fields[b.dataset.reset]; saveDraft(); const y = $('editor').scrollTop; renderAll(); $('editor').scrollTop = y; });
+}
+function refreshFieldMessages(ta){
+  const box = ta.closest('.field'); const issues = fieldIssues(CURRENT, ta.dataset.fk, ta.value);
+  box.querySelectorAll('.msg').forEach(m => m.remove());
+  issues.forEach(i => { const d = document.createElement('div'); d.className = 'msg ' + i.level; d.textContent = i.text; box.appendChild(d); });
+  box.classList.toggle('error', issues.some(i=>i.level==='err'));
+  const modified = BASE.templates[CURRENT] && BASE.templates[CURRENT].fields[ta.dataset.fk] !== ta.value;
+  box.classList.toggle('modified', !!modified);
+  const undo = box.querySelector('[data-reset]'); if (undo) undo.hidden = !modified;
+}
+
+/* Preview: mirrors the console's email structure, with mock tables. Unknown placeholders are highlighted. */
+function H(tk, fk, extra){
+  const vars = Object.assign({}, SAMPLE, extra || {});
+  const allowed = new Set(META[tk].placeholders.concat(META[tk].fields[fk] && META[tk].fields[fk].count ? ['count'] : []));
+  const v = {}; allowed.forEach(k => v[k] = vars[k]);
+  return tplHtml(DOC.templates[tk].fields[fk], v).replace(/\{\{\s*([a-z0-9_]+)\s*\}\}/gi, m => `<span class="unknown" title="Not available in this template">${m}</span>`);
+}
+function S(tk, fk){ const v = {}; META[tk].placeholders.forEach(k => v[k] = SAMPLE[k]); return tplText(DOC.templates[tk].fields[fk], v); }
+const LBL = k => tplEsc(DOC.templates.sectionLabels.fields[k] || '');
+function mock(cols, note){
+  return `<table><tr class="mockhead">${cols.map(c=>`<td>${c}</td>`).join('')}</tr>
+    <tr class="mock"><td>1234567</td><td colspan="${cols.length-2}">Sample manuscript row (generated by the tool)</td><td>${note?tplEsc(note):'Open'}</td></tr></table>`;
+}
+function para(tk, fk, extra){ return DOC.templates[tk].fields[fk] ? `<p>${H(tk, fk, extra)}</p>` : ''; }
+function renderPreview(){
+  const tk = CURRENT; let to = 'editor@example.org', subject = '', body = '';
+  const edCols = ['ID','Journal','Title …','EA observations','ReX'];
+  if (tk === 'editorSummary' || tk === 'triageSummary'){
+    const f = DOC.templates[tk].fields;
+    subject = S(tk, 'subject');
+    const bullets = tk === 'editorSummary'
+      ? [['countDecision',2],['countInvite',3],['countPending',1]]
+      : [['countReviewDecision',1],['countInviteHE',2]];
+    body = para(tk,'greeting') + para(tk,'intro') + para(tk,'dataNote') +
+      `<p><b>${H(tk,'summaryHeading')}</b><br>${bullets.map(([k,n]) => '&#8226; ' + H(tk,k,{count:n})).join('<br>')}</p>`;
+    const notes = DOC.templates.sectionLabels.fields;
+    if (tk === 'editorSummary'){
+      body += `<h3>${LBL('EDITOR_DECISION')}</h3>${mock(edCols, notes.note_EDITOR_DECISION)}`;
+      body += `<h3>${LBL('EDITOR_INVITE')}</h3>${mock(edCols, notes.note_EDITOR_INVITE)}${f.riqTip ? para(tk,'riqTip') : ''}`;
+      body += `<h3>${LBL('REVIEWERS_PENDING')}</h3>${mock(edCols, notes.note_REVIEWERS_PENDING)}`;
+    } else {
+      body += `<h3>${LBL('TRIAGE_REVIEW_DECISION')}</h3>${mock(edCols, notes.note_TRIAGE_REVIEW_DECISION)}`;
+      body += `<h3>${LBL('TRIAGE_INVITE_HE')}</h3>${mock(edCols, notes.note_TRIAGE_INVITE_HE)}`;
+    }
+    body += `<p>${H(tk,'closing')}<br>Editorial Office<br>JEX</p>`;
+  } else if (tk === 'eaV1Status'){
+    to = 'ea.mailbox@example.org'; subject = S(tk,'subject');
+    body = para(tk,'greeting') + para(tk,'intro') + `<p><b>${H(tk,'summaryHeading')}</b><br>` +
+      [['countNoHE',1],['countNoInvite',2],['countInvitedNone',4],['countAccepted',5]].map(([k,n]) => '&#8226; ' + H(tk,k,{count:n})).join('<br>') + '</p>' +
+      ['headingNoHE','headingNoInvite','headingInvitedNone','headingAccepted'].map(k => `<h3>${H(tk,k)}</h3>${mock(['ID','Journal','Title …','ReX'])}`).join('') +
+      `<p>${H(tk,'closing')}<br>Editorial Office</p>`;
+  } else if (tk === 'eaStaleInvites'){
+    to = 'ea.mailbox@example.org'; subject = S(tk,'subject');
+    body = para(tk,'greeting') + para(tk,'intro') + mock(['ID','Journal','Title …','ReX']) + `<p>${H(tk,'closing')}<br>Editorial Office</p>`;
+  } else if (tk === 'reviewerReminder'){
+    to = 'reviewer@example.org'; subject = S(tk,'subject');
+    body = ['greeting','opening','reminder','manuscriptBlock','location','support','thanks'].map(k => para(tk,k)).join('') +
+      `<p>${H(tk,'closing')}<br>${H(tk,'signature')}</p>`;
+  } else {
+    const f = DOC.templates.sectionLabels.fields;
+    $('preview').innerHTML = `<div class="labels"><table><tr><th>Section heading</th><th>EA note in the table</th></tr>${
+      ['EDITOR_DECISION','EDITOR_INVITE','REVIEWERS_PENDING','EA_DISCREPANCY','OTHER','TRIAGE_INVITE_HE','TRIAGE_REVIEW_DECISION','TRIAGE_OTHER']
+      .map(k => `<tr><td>${tplEsc(f[k])}</td><td>${tplEsc(f['note_'+k])}${k==='EDITOR_INVITE'?`<br><small style="color:var(--muted)">All reviewers overdue: ${tplEsc(f.note_EDITOR_INVITE_ALL_OVERDUE)}</small>`:''}</td></tr>`).join('')}</table></div>`;
+    return;
+  }
+  const subjHtml = tplEsc(subject).replace(/\{\{\s*([a-z0-9_]+)\s*\}\}/gi, m => `<span class="unknown">${m}</span>`);
+  $('preview').innerHTML = `<div class="mailhead"><div><span>To</span>${to}</div><div><span>Subject</span><b>${subjHtml}</b></div></div><div class="mail">${body}</div>
+    <p style="font-size:12px;color:var(--muted);margin-top:8px">Sample values: Dr. Jane Example, journal JEX. Grey rows stand in for the manuscript tables the tool generates.</p>`;
+}
+
+/* ============================================================ OPEN */
+$('openBtn').onclick = () => $('openPanel').hidden = false;
+document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => b.closest('.panel').hidden = true);
+document.querySelectorAll('.panel').forEach(p => p.addEventListener('click', e => { if (e.target === p) p.hidden = true; }));
+document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.panel').forEach(p => p.hidden = true); });
+let OPEN_MODE = 'json';
+document.querySelectorAll('[data-open]').forEach(b => b.onclick = () => {
+  OPEN_MODE = b.dataset.open;
+  if (OPEN_MODE === 'defaults'){ setDoc(builtinDefaults(), 'Built-in defaults'); $('openPanel').hidden = true; toast('Loaded the built-in defaults'); return; }
+  $('openFile').accept = OPEN_MODE === 'json' ? '.json' : '.html,.htm';
+  $('openFile').click();
+});
+function extractFromConsole(text){
+  const m = text.match(/<script type="application\/json" id="mipTemplates">([\s\S]*?)<\/script>/);
+  if (!m) throw new Error('No templates block found. Is this MIP Drafts Console v2.2 or later?');
+  return JSON.parse(m[1]);
+}
+$('openFile').onchange = async e => {
+  const file = e.target.files[0]; e.target.value = '';
+  if (!file) return;
+  try {
+    const text = await file.text();
+    const doc = OPEN_MODE === 'json' ? JSON.parse(text) : extractFromConsole(text);
+    setDoc(doc, file.name);
+    $('openPanel').hidden = true;
+    toast(`Opened ${file.name}`);
+  } catch (err) { toast(`Couldn't open ${file.name}: ${err.message}`); }
+};
+
+/* ============================================================ RELEASE */
+function bumpPatch(v){ const p = String(v||'1.0.0').split('.').map(n=>parseInt(n,10)||0); while(p.length<3)p.push(0); p[2]++; return p.join('.'); }
+$('releaseBtn').onclick = () => {
+  const errs = allErrors(), changes = changeList();
+  $('relErrors').innerHTML = errs.length
+    ? `<div class="banner bad"><b>Fix ${errs.length} problem${errs.length>1?'s':''} before releasing:</b><br>${errs.slice(0,8).map(tplEsc).join('<br>')}${errs.length>8?'<br>…':''}</div>`
+    : (changes.length ? '' : `<div class="banner warn">Nothing has changed since you opened this file. You can still re-release it, for example to record an approval.</div>`);
+  $('relVersion').value = changes.length ? bumpPatch(BASE.version) : (DOC.version || '1.0.0');
+  $('relApprover').value = DOC.approvedBy || '';
+  $('relNote').value = '';
+  $('relChanges').innerHTML = changes.length ? changes.map(c => `<div><b>${tplEsc(DOC.templates[c.tk].name)}</b> → ${tplEsc(META[c.tk].fields[c.fk].label)}<br><code>${tplEsc(c.b)}</code></div>`).join('') : '<div style="color:var(--muted)">No changes</div>';
+  $('dlJsonBtn').disabled = $('dlConsoleBtn').disabled = errs.length > 0;
+  $('releasePanel').hidden = false;
+};
+function releasedDoc(){
+  const version = $('relVersion').value.trim(), approver = $('relApprover').value.trim(), note = $('relNote').value.trim();
+  if (!/^\d+\.\d+\.\d+$/.test(version)) throw new Error('Version must look like 1.0.1');
+  if (!approver) throw new Error('Add who approved this wording.');
+  if (!note) throw new Error('Say briefly what changed.');
+  const out = clone(DOC);
+  out.history = (BASE.history || []).concat(BASE.version ? [{version: BASE.version, updated: BASE.updated || '', approvedBy: BASE.approvedBy || '', changeNote: BASE.changeNote || ''}] : []);
+  out.version = version; out.approvedBy = approver; out.changeNote = note; out.updated = new Date().toISOString().slice(0,10);
+  return out;
+}
+function download(name, text, type){
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], {type})); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+function afterRelease(doc){
+  BASE = clone(doc); DOC = clone(doc); SOURCE = `released v${doc.version}`; clearDraft(); renderAll();
+}
+$('dlJsonBtn').onclick = () => {
+  try { const doc = releasedDoc(); download('templates.json', JSON.stringify(doc, null, 2) + '\n', 'application/json'); toast('Downloaded templates.json. Save it over templates/templates.json in the repo.'); afterRelease(doc); $('releasePanel').hidden = true; }
+  catch (err) { toast(err.message); }
+};
+$('dlConsoleBtn').onclick = () => {
+  try { releasedDoc(); } catch (err) { toast(err.message); return; }
+  $('consoleFile').click();
+};
+$('consoleFile').onchange = async e => {
+  const file = e.target.files[0]; e.target.value = '';
+  if (!file) return;
+  try {
+    const doc = releasedDoc();
+    const text = await file.text();
+    const re = /(<script type="application\/json" id="mipTemplates">)([\s\S]*?)(<\/script>)/;
+    if (!re.test(text)) throw new Error('No templates block in that file. Pick mip-drafts-console.html (v2.2 or later).');
+    const json = JSON.stringify(doc, null, 2).replace(/<\//g, '<\\/');
+    const updated = text.replace(re, (m, a, b, c) => `${a}\n${json}\n${c}`);
+    download(file.name, updated, 'text/html');
+    download('templates.json', JSON.stringify(doc, null, 2) + '\n', 'application/json');
+    toast(`Downloaded ${file.name} and templates.json. Save both over the repo copies, then commit in GitHub Desktop.`);
+    afterRelease(doc); $('releasePanel').hidden = true;
+  } catch (err) { toast(err.message); }
+};
+
+/* ============================================================ START */
+(function start(){
+  const draft = loadDraft();
+  if (draft && draft.doc && draft.base){
+    DOC = draft.doc; BASE = draft.base; SOURCE = (draft.source || 'draft') + ' (unsaved draft restored)';
+    renderAll(); toast('Restored your unsaved changes from last time. Use "Open templates…" to start fresh.');
+  } else {
+    setDoc(builtinDefaults(), 'Built-in defaults');
+  }
+})();
+window.addEventListener('beforeunload', e => { if (changeList().length) { e.preventDefault(); e.returnValue = ''; } });
+</script>
+</body>
+</html>
